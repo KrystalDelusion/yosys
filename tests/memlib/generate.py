@@ -95,6 +95,58 @@ TESTS += [
     Test("sync_small_block_attr", SYNC_SMALL_BLOCK, ["lut", "block_tdp"], [], {"RAM_BLOCK_TDP": 1}),
 ]
 
+### initialization values testing
+
+LUT_INIT = """
+module top(clk, ra, wa, rd, wd, we);
+
+localparam ABITS = {abits};
+localparam DBITS = {dbits};
+
+input wire clk;
+input wire we;
+input wire [ABITS-1:0] ra, wa;
+input wire [DBITS-1:0] wd;
+output wire [DBITS-1:0] rd;
+
+reg [DBITS-1:0] mem [0:2**ABITS-1];
+
+integer i;
+initial
+	for (i = 0; i < 2**ABITS-1; i = i + 1)
+		mem[i] = {ival};
+
+always @(posedge clk)
+    if (we)
+        mem[wa] <= wd;
+
+assign rd = mem[ra];
+
+endmodule
+"""
+
+INIT_LUT_ZEROS = LUT_INIT.format(abits=4, dbits=4, ival=0);
+INIT_LUT_VAL = LUT_INIT.format(abits=4, dbits=4, ival=5);
+INIT_LUT_VAL2 = LUT_INIT.format(abits=6, dbits=6, ival="6'h12");
+INIT_LUT_X = LUT_INIT.format(abits=4, dbits=4, ival="4'hx")
+
+TESTS += [
+	Test("init_lut_zeros_zero", INIT_LUT_ZEROS, ["lut"], ["INIT_ZERO"], {"RAM_LUT":1}),
+	Test("init_lut_zeros_any", INIT_LUT_ZEROS, ["lut"], ["INIT_ANY"], {"RAM_LUT":1}),
+	Test("init_lut_val_zero", INIT_LUT_VAL, ["lut"], ["INIT_ZERO"], {"RAM_LUT":0}), #CHECK: no emulation?
+	Test("init_lut_val_any", INIT_LUT_VAL, ["lut"], ["INIT_ANY"], {"RAM_LUT":1}),
+	Test("init_lut_val_no_undef", INIT_LUT_VAL, ["lut"], ["INIT_NO_UNDEF"], {"RAM_LUT":1}),
+	Test("init_lut_val2_any", INIT_LUT_VAL2, ["lut"], ["INIT_ANY"], {"RAM_LUT":8}),
+	Test("init_lut_val2_no_undef", INIT_LUT_VAL2, ["lut"], ["INIT_NO_UNDEF"], {"RAM_LUT":8}),
+	Test("init_lut_x_none", INIT_LUT_X, ["lut"], ["INIT_NONE"], {"RAM_LUT":1}),
+	Test("init_lut_x_zero", INIT_LUT_X, ["lut"], ["INIT_ZERO"], {"RAM_LUT":1}),
+	Test("init_lut_x_any", INIT_LUT_X, ["lut"], ["INIT_ANY"], {"RAM_LUT":1}),
+	Test("init_lut_x_no_undef", INIT_LUT_X, ["lut"], ["INIT_NO_UNDEF"], {"RAM_LUT":1}),
+]
+
+### initialization with 9-bit-per-byte
+# TODO
+
 ### basic TDP test
 
 TDP = """
