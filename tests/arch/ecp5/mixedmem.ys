@@ -1,0 +1,9 @@
+# ================================ RAM ================================
+# RAM bits <= 18K; Data width <= 36; Address width <= 9: -> DP16KD
+
+design -reset; read_verilog -defer ../common/blockram.v
+chparam -set WD_WIDTH 9 -set WA_WIDTH 8 -set RA_WIDTH 8 -set RD_WIDTH 9 sync_ram_mixed
+hierarchy -top sync_ram_mixed
+synth_ecp5 -top sync_ram_mixed; cd sync_ram_mixed
+stat
+select -assert-count 1 t:DP16KD
