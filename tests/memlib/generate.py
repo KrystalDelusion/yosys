@@ -144,8 +144,95 @@ TESTS += [
 	Test("init_lut_x_no_undef", INIT_LUT_X, ["lut"], ["INIT_NO_UNDEF"], {"RAM_LUT":1}),
 ]
 
-### initialization with 9-bit-per-byte
-# TODO
+### width testing 9-bit-per-byte
+RAM_9b1B = """
+module top(clk, ra, wa, rd, wd, we);
+
+localparam ABITS = {abits};
+localparam DBITS = {dbits};
+
+input wire clk;
+input wire we;
+input wire [ABITS-1:0] ra, wa;
+input wire [DBITS-1:0] wd;
+output reg [DBITS-1:0] rd;
+
+reg [DBITS-1:0] mem [0:2**ABITS-1];
+
+always @(posedge clk)
+    if (we)
+        mem[wa] <= wd;
+
+always @(posedge clk)
+    rd <= mem[ra];
+
+endmodule
+"""
+
+RAM_18b2B = RAM_9b1B.format(abits=3, dbits=18);
+RAM_9b1B = RAM_9b1B.format(abits=4, dbits=9);
+RAM_4b1B = RAM_9b1B.format(abits=5, dbits=4);
+RAM_2b1B = RAM_9b1B.format(abits=6, dbits=2);
+RAM_1b1B = RAM_9b1B.format(abits=7, dbits=1);
+
+TESTS += [
+	Test("ram_18b2B", RAM_18b2B, ["9b1B"], [], {"RAM_9b1B":1}),
+	Test("ram_9b1B", RAM_9b1B, ["9b1B"], [], {"RAM_9b1B":1}),
+	Test("ram_4b1B", RAM_4b1B, ["9b1B"], [], {"RAM_9b1B":1}),
+	Test("ram_2b1B", RAM_2b1B, ["9b1B"], [], {"RAM_9b1B":1}),
+	Test("ram_1b1B", RAM_1b1B, ["9b1B"], [], {"RAM_9b1B":1}),
+]
+
+### initializing 9-bits-per-byte
+RAM_9b1B_init = """
+module top(clk, ra, wa, rd, wd, we);
+
+localparam ABITS = {abits};
+localparam DBITS = {dbits};
+
+input wire clk;
+input wire we;
+input wire [ABITS-1:0] ra, wa;
+input wire [DBITS-1:0] wd;
+output reg [DBITS-1:0] rd;
+
+reg [DBITS-1:0] mem [0:2**ABITS-1];
+
+integer i;
+initial
+	for (i = 0; i < 2**ABITS-1; i = i + 1)
+		mem[i] = {ival};
+
+always @(posedge clk)
+    if (we)
+        mem[wa] <= wd;
+
+always @(posedge clk)
+    rd <= mem[ra];
+
+endmodule
+"""
+
+INIT_9b1B_ZEROS = RAM_9b1B_init.format(abits=4, dbits=9, ival=0);
+INIT_9b1B_VAL = RAM_9b1B_init.format(abits=4, dbits=9, ival=275);
+INIT_13b2B_VAL = RAM_9b1B_init.format(abits=3, dbits=13, ival="13'h01f3")
+INIT_18b2B_VAL = RAM_9b1B_init.format(abits=4, dbits=18, ival="18'h1f39a");
+INIT_4b1B_X = RAM_9b1B_init.format(abits=5, dbits=4, ival="4'hx")
+
+TESTS += [
+	Test("init_9b1B_zeros_zero", INIT_9b1B_ZEROS, ["9b1B"], ["INIT_ZERO"], {"RAM_9b1B":1}),
+	Test("init_9b1B_zeros_any", INIT_9b1B_ZEROS, ["9b1B"], ["INIT_ANY"], {"RAM_9b1B":1}),
+	Test("init_9b1B_val_zero", INIT_9b1B_VAL, ["9b1B"], ["INIT_ZERO"], {"RAM_9b1B":0}), #CHECK: no emulation?
+	Test("init_9b1B_val_any", INIT_9b1B_VAL, ["9b1B"], ["INIT_ANY"], {"RAM_9b1B":1}),
+	Test("init_9b1B_val_no_undef", INIT_9b1B_VAL, ["9b1B"], ["INIT_NO_UNDEF"], {"RAM_9b1B":1}),
+	Test("init_13b2B_val_any", INIT_13b2B_VAL, ["9b1B"], ["INIT_ANY"], {"RAM_9b1B":1}),
+	Test("init_18b2B_val_any", INIT_18b2B_VAL, ["9b1B"], ["INIT_ANY"], {"RAM_9b1B":2}),
+	Test("init_18b2B_val_no_undef", INIT_18b2B_VAL, ["9b1B"], ["INIT_NO_UNDEF"], {"RAM_9b1B":2}),
+	Test("init_4b1B_x_none", INIT_4b1B_X, ["9b1B"], ["INIT_NONE"], {"RAM_9b1B":1}),
+	Test("init_4b1B_x_zero", INIT_4b1B_X, ["9b1B"], ["INIT_ZERO"], {"RAM_9b1B":1}),
+	Test("init_4b1B_x_any", INIT_4b1B_X, ["9b1B"], ["INIT_ANY"], {"RAM_9b1B":1}),
+	Test("init_4b1B_x_no_undef", INIT_4b1B_X, ["9b1B"], ["INIT_NO_UNDEF"], {"RAM_9b1B":1}),
+]
 
 ### basic TDP test
 
