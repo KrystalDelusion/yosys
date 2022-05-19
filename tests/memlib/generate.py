@@ -234,6 +234,71 @@ TESTS += [
 	Test("init_4b1B_x_no_undef", INIT_4b1B_X, ["9b1B"], ["INIT_NO_UNDEF"], {"RAM_9b1B":1}),
 ]
 
+### mixed width testing
+
+MIXED_WRITE = """
+module top(clk, ra, wa, rd, wd, we);
+
+localparam WABITS = {wabits};
+localparam WDBITS = {wdbits};
+
+localparam RABITS = {rabits};
+localparam RDBITS = {rdbits};
+
+input wire clk;
+input wire we;
+input wire [WABITS-1:0] wa;
+input wire [WDBITS-1:0] wd;
+input wire [RABITS-1:0] ra;
+output reg [RDBITS-1:0] rd;
+
+localparam DEPTH = (2**WABITS);
+
+localparam OFFSET = RABITS-WABITS;
+
+(* syn_ramstyle = "block_ram" *)
+reg [WDBITS-1:0] mem [0:DEPTH-1];
+
+always @(posedge clk)
+	if (we)
+		mem[wa] <= wd;
+
+if (OFFSET > 0) begin
+	reg [WDBITS-1:0] mem_read;
+	reg [OFFSET-1:0] subaddr_r;
+	always @(posedge clk) begin
+		mem_read <= mem[ra[RABITS-1:OFFSET]];
+		subaddr_r <= ra[OFFSET-1:0];
+	end
+
+	always @(mem_read, subaddr_r)
+		rd <= mem_read[subaddr_r*RDBITS+:RDBITS];
+end 
+else 
+begin
+	always @(posedge clk)
+		case (OFFSET)
+		0:  rd <= mem[ra];
+		-1: rd <= {{ mem[ra], mem[ra+1] }};
+		endcase
+end
+endmodule
+"""
+
+UNMIXED = MIXED_WRITE.format(wabits=4, wdbits=9, rabits=4, rdbits=9)
+MIXED_9_18 = MIXED_WRITE.format(wabits=5, wdbits=9, rabits=4, rdbits=18)
+MIXED_18_9 = MIXED_WRITE.format(wabits=3, wdbits=18, rabits=4, rdbits=9)
+MIXED_36_9 = MIXED_WRITE.format(wabits=3, wdbits=36, rabits=5, rdbits=9)
+MIXED_4_2 = MIXED_WRITE.format(wabits=5, wdbits=4, rabits=6, rdbits=2);
+
+TESTS += [
+	Test("unmixed", UNMIXED, ["9b1B"], [], {"RAM_9b1B":1}),
+	Test("mixed_9_18", MIXED_9_18, ["9b1B"], [], {"RAM_9b1B":4}), #CHECK: only using half the memory
+	Test("mixed_18_9", MIXED_18_9, ["9b1B"], [], {"RAM_9b1B":1}),
+	Test("mixed_36_9", MIXED_36_9, ["9b1B"], [], {"RAM_9b1B":2}),
+	Test("mixed_4_2", MIXED_4_2, ["9b1B"], [], {"RAM_9b1B":1}),
+]
+
 ### basic TDP test
 
 TDP = """

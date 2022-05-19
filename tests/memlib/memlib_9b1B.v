@@ -32,7 +32,7 @@ initial
 wire [3:0] addr_r;
 assign addr_r = PORT_R_ADDR[6:3];
 reg [17:0] mem_read;
-reg[2:0] subaddr_r;
+reg [2:0] subaddr_r;
 always @(negedge (PORT_R_CLK ^ PORT_R_CLK_POL)) begin
 	subaddr_r <= PORT_R_ADDR[2:0];
 	mem_read[8:0] <= mem[addr_r];
