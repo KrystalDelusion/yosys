@@ -1,0 +1,75 @@
+# ================================ RAM ================================
+# RAM bits <= 18K; Data width <= 36; Address width <= 9: -> DP16KD
+
+read_verilog -defer ../common/blockram.v
+chparam -set WD_WIDTH 9 -set WA_WIDTH 8 -set RA_WIDTH 8 -set RD_WIDTH 9 sync_ram_mixed
+hierarchy -top sync_ram_mixed
+read_verilog -lib -specify +/ecp5/cells_sim.v +/ecp5/cells_bb.v
+hierarchy -check -top sync_ram_mixed
+# coarse
+proc
+tribuf -logic
+deminout
+opt_expr
+opt_clean
+check
+opt -nodffe -nosdff
+fsm
+opt
+wreduce
+peepopt
+opt_clean
+share
+techmap -map +/cmp2lut.v -D LUT_WIDTH=4
+opt_expr
+opt_clean
+techmap -map +/mul2dsp.v -map +/ecp5/dsp_map.v -D DSP_A_MAXWIDTH=18 -D DSP_B_MAXWIDTH=18  -D DSP_A_MINWIDTH=2 -D DSP_B_MINWIDTH=2  -D DSP_NAME=$__MUL18X18
+chtype -set $mul t:$__soft_mul
+alumacc
+opt
+memory -nomap
+opt_clean
+
+# map_ram:
+memory_libmap -lib +/ecp5/lutrams.txt -lib +/ecp5/brams.txt
+techmap -map +/ecp5/lutrams_map.v -map +/ecp5/brams_map.v
+
+# map_ffram:
+opt -fast -mux_undef -undriven -fine
+memory_map
+opt -undriven -fine
+
+# map_gates:
+techmap -map +/techmap.v -map +/ecp5/arith_map.v
+opt -fast
+abc -dff -D 1
+
+# map_ffs:
+opt_clean
+dfflegalize  -cell $_DFF_?_ 01 -cell $_DFF_?P?_ r -cell $_SDFF_?P?_ r
+techmap -D NO_LUT -map +/ecp5/cells_map.v
+opt_expr -undriven -mux_undef
+simplemap
+ecp5_gsr
+attrmvcp -copy -attr syn_useioff
+opt_clean
+
+# map_luts:
+techmap -map +/ecp5/latches_map.v
+abc -dress -lut 4:7
+clean
+
+# map_cells:
+techmap -map +/ecp5/cells_map.v
+opt_lut_ins -tech ecp5
+clean
+
+# check:
+autoname
+hierarchy -check
+stat
+check -noinit
+blackbox =A:whitebox
+
+stat
+select -assert-count 1 t:DP16KD
