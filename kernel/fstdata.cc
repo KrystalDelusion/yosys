@@ -85,6 +85,13 @@ fstHandle FstData::getHandle(std::string name) {
 		return 0;
 };
 
+dict<int,fstHandle> FstData::getMemoryHandles(std::string name) { 
+	if (memory_to_handle.find(name) != memory_to_handle.end())
+		return memory_to_handle[name];
+	else 
+		return dict<int,fstHandle>();
+};
+
 static std::string remove_spaces(std::string str)
 {
 	str.erase(std::remove(str.begin(), str.end(), ' '), str.end());
@@ -126,7 +133,36 @@ void FstData::extractVarNames()
 				}
 				if (clean_name[0]=='\\')
 					clean_name = clean_name.substr(1);
-
+				size_t pos = clean_name.find_last_of("<");
+				if (pos != std::string::npos) {
+					std::string mem_cell = clean_name.substr(0, pos);
+					std::string addr = clean_name.substr(pos+1);
+					addr.pop_back(); // remove closing bracket
+					char *endptr;
+					int mem_addr = strtol(addr.c_str(), &endptr, 16);
+					if (*endptr) {
+						log_warning("Error parsing memory address in : %s\n", clean_name.c_str());
+					} else {
+						memory_to_handle[var.scope+"."+mem_cell][mem_addr] = var.id;
+						name_to_handle[stringf("%s.%s[%d]",var.scope.c_str(),mem_cell.c_str(),mem_addr)] = h->u.var.handle;
+						continue;
+					}
+				}
+				pos = clean_name.find_last_of("[");
+				if (pos != std::string::npos) {
+					std::string mem_cell = clean_name.substr(0, pos);
+					std::string addr = clean_name.substr(pos+1);
+					addr.pop_back(); // remove closing bracket
+					char *endptr;
+					int mem_addr = strtol(addr.c_str(), &endptr, 10);
+					if (*endptr) {
+						log_warning("Error parsing memory address in : %s\n", clean_name.c_str());
+					} else {
+						memory_to_handle[var.scope+"."+mem_cell][mem_addr] = var.id;
+						name_to_handle[stringf("%s.%s[%d]",var.scope.c_str(),mem_cell.c_str(),mem_addr)] = h->u.var.handle;
+						continue;
+					}
+				}
 				name_to_handle[var.scope+"."+clean_name] = h->u.var.handle;
 				break;
 			}
@@ -201,10 +237,11 @@ void FstData::reconstructAllAtTimes(std::vector<fstHandle> &signal, uint64_t sta
 	fstReaderSetUnlimitedTimeRange(ctx);
 	fstReaderSetFacProcessMaskAll(ctx);
 	fstReaderIterBlocks2(ctx, reconstruct_clb_attimes, reconstruct_clb_varlen_attimes, this, nullptr);
-	past_data = last_data;
-	callback(last_time);
-	if (last_time!=end_time)
-		callback(end_time);
+	if (last_time!=end_time) {
+		past_data = last_data;
+		callback(last_time);
+	}
+	callback(end_time);
 }
 
 std::string FstData::valueOf(fstHandle signal)

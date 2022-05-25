@@ -1116,16 +1116,8 @@ void MemMapping::handle_geom() {
 				}
 			}
 		}
-		// Determine lowest reasonable base width.
-		int start_base = GetSize(cfg.def->dbits) - 1;
-		for (auto &pcfg: cfg.wr_ports)
-			if (pcfg.def->min_wr_wide_log2 < start_base)
-				start_base = pcfg.def->min_wr_wide_log2;
-		for (auto &pcfg: cfg.rd_ports)
-			if (pcfg.def->min_rd_wide_log2 < start_base)
-				start_base = pcfg.def->min_rd_wide_log2;
 		// Iterate over base widths.
-		for (int base_width_log2 = start_base; base_width_log2 < GetSize(cfg.def->dbits); base_width_log2++) {
+		for (int base_width_log2 = 0; base_width_log2 < GetSize(cfg.def->dbits); base_width_log2++) {
 			// Now, see how many data bits we actually have available.
 			// This is usually dbits[base_width_log2], but could be smaller if we
 			// ran afoul of a max width limitation.  Configurations where this
@@ -1450,7 +1442,6 @@ std::vector<SigSpec> generate_demux(Mem &mem, int wpidx, const Swizzle &swz) {
 	auto compressed = port.compress_en();
 	SigSpec sig_a = compressed.first;
 	SigSpec addr = port.addr;
-	addr.extend_u0(swz.addr_shift + hi_bits, false);
 	if (GetSize(addr) > hi_bits + swz.addr_shift) {
 		int lo = mem.start_offset;
 		int hi = mem.start_offset + mem.size;
@@ -1470,6 +1461,7 @@ std::vector<SigSpec> generate_demux(Mem &mem, int wpidx, const Swizzle &swz) {
 		SigSpec in_range = mem.module->And(NEW_ID, mem.module->Ge(NEW_ID, addr, lo), mem.module->Lt(NEW_ID, addr, hi));
 		sig_a = mem.module->Mux(NEW_ID, Const(State::S0, GetSize(sig_a)), sig_a, in_range);
 	}
+	addr.extend_u0(swz.addr_shift + hi_bits, false);
 	SigSpec sig_s;
 	for (int x : swz.addr_mux_bits)
 		sig_s.append(addr[x]);
