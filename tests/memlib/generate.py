@@ -806,6 +806,7 @@ TESTS += [
     Test("sp_srst_gv_init_re", SP_SRST_GV, ["block_sp"], ["RDINIT_ANY", "RDSRST_INIT", "RDEN", "RDWR_OLD"], {"RAM_BLOCK_SP": 1}),
 ]
 
+# Mixed width testing
 WIDE_SDP = """
 module top(rclk, ra, rd, re, rr, wclk, wa, wd, we);
 
@@ -1061,6 +1062,7 @@ for (aw, rw, ww, bw, cntww, cntwr) in [
         {"RAM_WIDE_WRITE": cntww}
     ))
 
+# 1rw port plus 3 (or 7) r ports
 QUAD_PORT = """
 module top(clk, rwa, r0a, r1a, r2a, rd, r0d, r1d, r2d, wd, we);
 
