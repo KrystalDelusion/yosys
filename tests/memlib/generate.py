@@ -1104,9 +1104,68 @@ for (abits, dbits, cnt) in [
     TESTS.append(Test(
         f"quad_port_a{abits}d{dbits}",
         QUAD_PORT.format(abits=abits, dbits=dbits),
-        ["multilut"], [],
+        ["multilut"], ["PORTS_QUAD"],
         {"LUT_MULTI": cnt}
     ))
+
+WIDE_READ = """
+module top(clk, we, rwa, wd, rd);
+
+localparam ABITS = {abits};
+localparam WBITS = {wbits};
+localparam RWORDS = {rwords};
+
+input wire clk;
+input wire we;
+input wire [ABITS-1:0] rwa;
+input wire [WBITS-1:0] wd;
+output wire [(WBITS*RWORDS)-1:0] rd;
+
+reg [WBITS-1:0] mem [0:2**ABITS-1];
+
+always @(posedge clk)
+	if (we)
+		mem[rwa] <= wd;
+
+genvar i;
+generate
+	for (i = 0; i < RWORDS; i = i + 1)
+		assign rd[i*WBITS+:WBITS] = mem[rwa + i];
+endgenerate
+
+endmodule
+"""
+
+for (abits, wbits, rwords, cntquad, cntoct) in [
+	(4, 2, 1, 1, 1),
+	(4, 2, 2, 1, 1),
+	(4, 2, 3, 1, 1),
+	(4, 2, 4, 1, 1),
+	(4, 2, 5, 2, 1),
+	(4, 2, 6, 2, 1),
+	(4, 2, 7, 2, 1), # Write port needs to be duplicated, so only 3 extra read 
+	(4, 2, 8, 3, 1), # ports per quad port LUT (i.e. 7 ports in 2, 8 ports in 3)
+	(4, 2, 9, 3, 2),
+	(4, 4, 1, 2, 2),
+	(4, 4, 4, 2, 2),
+	(4, 4, 6, 4, 2),
+	(4, 4, 9, 6, 4),
+	(5, 2, 1, 2, 2),
+	(5, 2, 4, 2, 2),
+	(5, 2, 9, 6, 4),
+]:
+	TESTS.append(Test(
+		f"wide_quad_a{abits}w{wbits}r{rwords}",
+		WIDE_READ.format(abits=abits, wbits=wbits, rwords=rwords),
+		["multilut"], ["PORTS_QUAD"],
+		{"LUT_MULTI": cntquad}
+	))
+	TESTS.append(Test(
+		f"wide_oct_a{abits}w{wbits}r{rwords}",
+		WIDE_READ.format(abits=abits, wbits=wbits, rwords=rwords),
+		["multilut"], ["PORTS_OCT"],
+		{"LUT_MULTI": cntoct}
+	))
 
 with open("run-test.mk", "w") as mf:
     mf.write("ifneq ($(strip $(SEED)),)\n")

@@ -5,12 +5,15 @@ ram distributed \LUT_MULTI {
 	port arsw "RW" {
 		clock posedge;
 	}
-	option "PORTS" "QUAD" {
-		port ar "R0" "R1" "R2" {
+	ifdef PORTS_QUAD {
+		option "PORTS" "QUAD" {
+			port ar "R0" "R1" "R2" {
+			}
 		}
-	}
-	option "PORTS" "OCT" {
-		port ar "R0" "R1" "R2" "R3" "R4" "R5" "R6" {
+	} else ifdef PORTS_OCT {
+		option "PORTS" "OCT" {
+			port ar "R0" "R1" "R2" "R3" "R4" "R5" "R6" {
+			}
 		}
 	}
 }
