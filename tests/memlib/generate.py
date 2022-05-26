@@ -1061,6 +1061,53 @@ for (aw, rw, ww, bw, cntww, cntwr) in [
         {"RAM_WIDE_WRITE": cntww}
     ))
 
+QUAD_PORT = """
+module top(clk, rwa, r0a, r1a, r2a, rd, r0d, r1d, r2d, wd, we);
+
+localparam ABITS = {abits};
+localparam DBITS = {dbits};
+
+input wire clk;
+input wire we;
+input wire [ABITS-1:0] rwa;
+input wire [ABITS-1:0] r0a;
+input wire [ABITS-1:0] r1a;
+input wire [ABITS-1:0] r2a;
+input wire [DBITS-1:0] wd;
+output wire [DBITS-1:0] rd;
+output wire [DBITS-1:0] r0d;
+output wire [DBITS-1:0] r1d;
+output wire [DBITS-1:0] r2d;
+
+reg [DBITS-1:0] mem [0:2**ABITS-1];
+
+always @(posedge clk)
+    if (we)
+        mem[rwa] <= wd;
+
+assign rd = mem[rwa];
+assign r0d = mem[r0a];
+assign r1d = mem[r1a];
+assign r2d = mem[r2a];
+
+endmodule
+"""
+
+for (abits, dbits, cnt) in [
+    (2, 2, 1),
+    (4, 2, 1),
+    (5, 2, 2),
+    (4, 4, 2),
+    (6, 2, 4),
+    (4, 8, 4),
+]:
+    TESTS.append(Test(
+        f"quad_port_a{abits}d{dbits}",
+        QUAD_PORT.format(abits=abits, dbits=dbits),
+        ["multilut"], [],
+        {"LUT_MULTI": cnt}
+    ))
+
 with open("run-test.mk", "w") as mf:
     mf.write("ifneq ($(strip $(SEED)),)\n")
     mf.write("SEEDOPT=-S$(SEED)\n")
