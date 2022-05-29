@@ -806,6 +806,121 @@ TESTS += [
     Test("sp_srst_gv_init_re", SP_SRST_GV, ["block_sp"], ["RDINIT_ANY", "RDSRST_INIT", "RDEN", "RDWR_OLD"], {"RAM_BLOCK_SP": 1}),
 ]
 
+# Byte enables, wrbe_separate
+SYNC_ENABLE = """
+module top(clk, rwa, rd, wd, we);
+
+localparam ABITS = {abits};
+localparam DBITS = {dbits};
+
+input wire clk;
+input wire we;
+input wire [ABITS-1:0] rwa;
+input wire [DBITS-1:0] wd;
+output reg [DBITS-1:0] rd;
+
+reg [DBITS-1:0] mem [0:2**ABITS-1];
+
+always @(posedge clk) begin
+	if (we)
+		mem[rwa] <= wd;
+	else
+		rd <= mem[rwa];
+end
+
+endmodule
+"""
+
+for (abits, dbits, sep, defs, cells) in [
+	(4, 4, False,	["NO_BYTE"],	{"RAM_WREN": 1}),
+	(5, 4, False,	["NO_BYTE"],	{"RAM_WREN": 2}),
+	(6, 4, False,	["NO_BYTE"],	{"RAM_WREN": 4}),
+	# (4, 4, True,	["NO_BYTE"],	{"RAM_WREN": 1}), # should throw an error
+	(3, 8, False,	["NO_BYTE"],	{"RAM_WREN": 2}), # needs two write ports
+	(4, 8, False,	["NO_BYTE"],	{"RAM_WREN": 2}),
+	(4, 4, False,	["W4_B4"],	{"RAM_WREN": 1}),
+	(4, 8, True,	["W4_B4"],	{"RAM_WREN": 2}),
+	(4, 8, False,	["W8_B4"],	{"RAM_WREN": 1}),
+	(4, 8, True,	["W8_B4"],	{"RAM_WREN": 1}),
+	(4, 8, False,	["W8_B8"],	{"RAM_WREN": 1}),
+	(4, 8, True,	["W8_B8"],	{"RAM_WREN": 1}),
+
+]:
+	name = f"wren_a{abits}d{dbits}_{defs[0]}"
+	if (sep):
+		defs.append("WRBE_SEPARATE")
+		name += "_separate"
+
+	TESTS.append(Test(
+		name, SYNC_ENABLE.format(abits=abits, dbits=dbits),
+		["wren"], defs, cells
+	))
+
+ENABLES = """
+module top(clk, we, be, rwa, wd, rd);
+
+localparam ABITS = {abits};
+localparam WBITS = {wbits};
+localparam WORDS = {words};
+
+input wire clk;
+input wire we;
+input wire [WORDS-1:0] be;
+input wire [ABITS-1:0] rwa;
+input wire [(WBITS*WORDS)-1:0] wd;
+output reg [(WBITS*WORDS)-1:0] rd;
+
+reg [(WBITS*WORDS)-1:0] mem [0:2**ABITS-1];
+
+integer i;
+always @(posedge clk)
+	for (i=0; i<WORDS; i=i+1)
+		if (we && be[i])
+			mem[rwa][i*WBITS+:WBITS] <= wd[i*WBITS+:WBITS];
+
+always @(posedge clk)
+	if (!we)
+		rd <= mem[rwa];
+
+endmodule
+"""
+
+for (abits, wbits, words, defs, cells) in [
+	(4, 2, 8,	["W16_B4"],	{"RAM_WREN": 2}),
+	(4, 4, 4,	["W16_B4"],	{"RAM_WREN": 1}),
+	(5, 4, 2,	["W16_B4"],	{"RAM_WREN": 1}),
+	(5, 4, 4,	["W16_B4"],	{"RAM_WREN": 2}),
+	(4, 8, 2,	["W16_B4"],	{"RAM_WREN": 1}),
+	(5, 8, 1,	["W16_B4"],	{"RAM_WREN": 1}),
+	(5, 8, 2,	["W16_B4"],	{"RAM_WREN": 2}),
+	(4,16, 1,	["W16_B4"],	{"RAM_WREN": 1}),
+	(4, 4, 2,	["W8_B8"],	{"RAM_WREN": 2}),
+	(4, 4, 1,	["W8_B8"],	{"RAM_WREN": 1}),
+	(4, 8, 2,	["W8_B8"],	{"RAM_WREN": 2}),
+	(3, 8, 2,	["W8_B8"],	{"RAM_WREN": 2}),
+	(4, 4, 2,	["W8_B4"],	{"RAM_WREN": 1}),
+	(4, 2, 4,	["W8_B4"],	{"RAM_WREN": 1}),
+	(4, 4, 4,	["W8_B4"],	{"RAM_WREN": 2}),
+	(4, 4, 4,	["W4_B4"],	{"RAM_WREN": 4}),
+	(4, 4, 5,	["W4_B4"],	{"RAM_WREN": 5}),
+
+]:
+	name = f"wren_a{abits}d{wbits}w{words}_{defs[0]}"
+	TESTS.append(Test(
+		name, ENABLES.format(abits=abits, wbits=wbits, words=words),
+		["wren"], defs, cells
+	))
+
+	defs.append("WRBE_SEPARATE")
+	name += "_separate"
+	TESTS.append(Test(
+		name, ENABLES.format(abits=abits, wbits=wbits, words=words),
+		["wren"], defs, cells
+	))
+
+# abits/dbits determination (aka general geometry picking)
+# TODO
+
 # Mixed width testing
 WIDE_SDP = """
 module top(rclk, ra, rd, re, rr, wclk, wa, wd, we);
