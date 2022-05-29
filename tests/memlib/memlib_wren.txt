@@ -21,6 +21,11 @@ ram block \RAM_WREN {
 		option "BYTESIZE" 4 {
 			byte 4;
 		}
+	} else ifdef W64_B8 {
+		widths 64 global;
+		option "BYTESIZE" 8 {
+			byte 8;
+		}
 	}
 
 	port srsw "A" {

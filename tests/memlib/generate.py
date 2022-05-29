@@ -917,9 +917,66 @@ for (abits, wbits, words, defs, cells) in [
 		name, ENABLES.format(abits=abits, wbits=wbits, words=words),
 		["wren"], defs, cells
 	))
-
+	
 # abits/dbits determination (aka general geometry picking)
-# TODO
+GEOMETRIC = """
+module top(clk, rwa, rd, wd, we);
+
+localparam ABITS = {abits};
+localparam DBITS = {dbits};
+
+input wire clk;
+input wire we;
+input wire [ABITS-1:0] rwa;
+input wire [DBITS-1:0] wd;
+output reg [DBITS-1:0] rd;
+
+(* ram_style="block" *)
+reg [DBITS-1:0] mem [0:2**ABITS-1];
+
+always @(posedge clk)
+	if (we)
+		mem[rwa] <= wd;
+	else
+		rd <= mem[rwa];	
+
+endmodule
+"""
+
+for (abits,dbits,	libs,		defs,		cells) in [
+	# W64_B8 gives 16 * 64 = 1024 bits of memory with up to 8x8b rw ports
+	(  4, 64,	["wren"],	["W64_B8"],	{"RAM_WREN": 1}),
+	(  5, 32,	["wren"],	["W64_B8"],	{"RAM_WREN": 1}),
+	(  5, 64,	["wren"],	["W64_B8"],	{"RAM_WREN": 2}),
+	(  6, 16,	["wren"],	["W64_B8"],	{"RAM_WREN": 1}),
+	(  6, 30, 	["wren"], 	["W64_B8"], 	{"RAM_WREN": 2}),
+	(  6, 64,	["wren"],	["W64_B8"],	{"RAM_WREN": 4}),
+	(  7,  4,	["wren"],	["W64_B8"],	{"RAM_WREN": 1}),
+	(  7,  6, 	["wren"], 	["W64_B8"], 	{"RAM_WREN": 1}),
+	(  7,  8,	["wren"],	["W64_B8"],	{"RAM_WREN": 1}),
+	(  7, 17, 	["wren"], 	["W64_B8"], 	{"RAM_WREN": 3}),
+	(  8,  4,	["wren"],	["W64_B8"],	{"RAM_WREN": 2}),
+	(  8,  6, 	["wren"], 	["W64_B8"], 	{"RAM_WREN": 2}),
+	(  9,  4,	["wren"],	["W64_B8"],	{"RAM_WREN": 4}),
+	(  9,  8,	["wren"],	["W64_B8"],	{"RAM_WREN": 4}),
+	(  9,  5, 	["wren"], 	["W64_B8"], 	{"RAM_WREN": 4}),
+	(  9,  6, 	["wren"], 	["W64_B8"], 	{"RAM_WREN": 4}),
+	# 9b1B gives 128 bits of memory with 1 2 or 4 bit read and write ports
+	#	or   144 bits with 9 or 18 bit read and write ports
+	(  3, 18, 	["9b1B"], 	["INIT_NONE"], 	{"RAM_9b1B": 1}),
+	(  4,  4, 	["9b1B"], 	["INIT_NONE"], 	{"RAM_9b1B": 1}),
+	(  4, 18, 	["9b1B"], 	["INIT_NONE"], 	{"RAM_9b1B": 2}),
+	(  5, 32, 	["9b1B"], 	["INIT_NONE"], 	{"RAM_9b1B": 8}),
+	(  6,  4, 	["9b1B"], 	["INIT_NONE"], 	{"RAM_9b1B": 2}),
+	(  7, 11, 	["9b1B"], 	["INIT_NONE"], 	{"RAM_9b1B": 11}),
+	(  7, 18, 	["9b1B"], 	["INIT_NONE"], 	{"RAM_9b1B": 16}),
+	( 11,  1, 	["9b1B"], 	["INIT_NONE"], 	{"RAM_9b1B": 16}),
+]:
+	name = f"geom_a{abits}d{dbits}_{libs[0]}"
+	TESTS.append(Test(
+		name, GEOMETRIC.format(abits=abits, dbits=dbits),
+		libs, defs, cells
+	))
 
 # Mixed width testing
 WIDE_SDP = """
