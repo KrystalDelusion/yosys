@@ -902,7 +902,7 @@ for (abits, wbits, words, defs, cells) in [
 	(4, 8, 2,	["W8_B8"],	{"RAM_WREN": 2}),
 	(3, 8, 2,	["W8_B8"],	{"RAM_WREN": 2}),
 	(4, 4, 2,	["W8_B4"],	{"RAM_WREN": 1}),
-	(4, 2, 4,	["W8_B4"],	{"RAM_WREN": 1}),
+	(4, 2, 4,	["W8_B4"],	{"RAM_WREN": 2}),
 	(4, 4, 4,	["W8_B4"],	{"RAM_WREN": 2}),
 	(4, 4, 4,	["W4_B4"],	{"RAM_WREN": 4}),
 	(4, 4, 5,	["W4_B4"],	{"RAM_WREN": 5}),
