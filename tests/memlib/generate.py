@@ -1,13 +1,8 @@
 # TODO:
 
-# - memory initialization
 # - clock polarity combinations
 # - CE/srst/rdwr/be interactions
 # - priority logic
-# - byte enables, wrbe_separate
-# - duplication for read ports
-# - abits/dbits determination
-# - mixed width
 # - swizzles for weird width progressions
 
 
@@ -22,6 +17,7 @@ class Test:
 TESTS = []
 
 ### basic sanity tests
+# Asynchronous-read RAM
 
 ASYNC = """
 module top(clk, ra, wa, rd, wd, we);
@@ -56,6 +52,7 @@ TESTS += [
     Test("async_small_block", ASYNC_SMALL, ["block_tdp"], [], {"RAM_BLOCK_TDP": 0}),
 ]
 
+# Synchronous SDP read first
 SYNC = """
 module top(clk, ra, wa, rd, wd, we);
 
@@ -96,7 +93,6 @@ TESTS += [
 ]
 
 ### initialization values testing
-
 LUT_INIT = """
 module top(clk, ra, wa, rd, wd, we);
 
@@ -235,7 +231,7 @@ TESTS += [
 ]
 
 ### mixed width testing
-
+# Wide write port
 MIXED_WRITE = """
 module top(clk, ra, wa, rd, wd, we);
 
@@ -335,7 +331,7 @@ TESTS += [
 ]
 
 # shared clock
-
+# Synchronous SDP with clock domain crossing
 SYNC_2CLK = """
 module top(rclk, wclk, ra, wa, rd, wd, we);
 
@@ -367,7 +363,7 @@ TESTS += [
 ]
 
 # inter-port transparency
-
+# Synchronous SDP with write-first behaviour
 SYNC_TRANS = """
 module top(clk, ra, wa, rd, wd, we);
 
@@ -405,7 +401,7 @@ TESTS += [
 ]
 
 # rdwr checks
-
+# Synchronous single-port RAM with mutually exclusive read/write
 SP_NO_CHANGE = """
 module top(clk, addr, rd, wd, we);
 
@@ -451,6 +447,7 @@ end
 endmodule
 """
 
+# Synchronous single-port RAM with write-first behaviour
 SP_NEW = """
 module top(clk, addr, rd, wd, we);
 
@@ -499,6 +496,7 @@ end
 endmodule
 """
 
+# Synchronous single-port RAM with read-first behaviour
 SP_OLD = """
 module top(clk, addr, rd, wd, we);
 
@@ -577,6 +575,7 @@ TESTS += [
         Test("sp_old_auto_be", SP_OLD_BE, ["block_sp"], ["RDWR_NO_CHANGE", "RDWR_OLD", "RDWR_NEW"], {"RAM_BLOCK_SP": (1, {"OPTION_RDWR": "OLD"})}),
 ]
 
+# Synchronous read port with initial value
 SP_INIT = """
 module top(clk, addr, rd, wd, we, re);
 
@@ -622,6 +621,7 @@ TESTS += [
     Test("sp_init_v_any_re", SP_INIT_V, ["block_sp"], ["RDINIT_ANY", "RDEN", "RDWR_OLD"], {"RAM_BLOCK_SP": 1}),
 ]
 
+# Synchronous read port with asynchronous reset
 SP_ARST = """
 module top(clk, addr, rd, wd, we, re, ar);
 
@@ -692,6 +692,7 @@ TESTS += [
     Test("sp_arst_n_init_re", SP_ARST_N, ["block_sp"], ["RDINIT_ANY", "RDARST_INIT", "RDEN", "RDWR_OLD"], {"RAM_BLOCK_SP": 1}),
 ]
 
+# Synchronous read port with synchronous reset (reset priority over enable)
 SP_SRST = """
 module top(clk, addr, rd, wd, we, re, sr);
 
@@ -719,6 +720,7 @@ end
 endmodule
 """
 
+# Synchronous read port with synchronous reet (enable priority over reset)
 SP_SRST_G = """
 module top(clk, addr, rd, wd, we, re, sr);
 
@@ -856,6 +858,7 @@ for (abits, dbits, sep, defs, cells) in [
 		["wren"], defs, cells
 	))
 
+# Write port with byte enables
 ENABLES = """
 module top(clk, we, be, rwa, wd, rd);
 
@@ -1234,6 +1237,7 @@ for (aw, rw, ww, bw, cntww, cntwr) in [
         {"RAM_WIDE_WRITE": cntww}
     ))
 
+# Multiple read ports
 # 1rw port plus 3 (or 7) r ports
 QUAD_PORT = """
 module top(clk, rwa, r0a, r1a, r2a, rd, r0d, r1d, r2d, wd, we);
@@ -1282,6 +1286,7 @@ for (abits, dbits, cnt) in [
         {"LUT_MULTI": cnt}
     ))
 
+# Wide asynchronous read port
 WIDE_READ = """
 module top(clk, we, rwa, wd, rd);
 
