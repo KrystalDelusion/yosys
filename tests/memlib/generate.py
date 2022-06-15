@@ -230,6 +230,58 @@ TESTS += [
 	Test("init_4b1B_x_no_undef", INIT_4b1B_X, ["9b1B"], ["INIT_NO_UNDEF"], {"RAM_9b1B":1}),
 ]
 
+### Clock polarity combinations
+# I'm not entirely convinced auto-test is correctly testing clock edging
+#  but they do at least all gen/synth
+SYNCCLOCK = """
+module top(clk, ra, wa, rd, wd, we);
+
+localparam ABITS = {abits};
+localparam DBITS = 8;
+
+input wire clk;
+input wire we;
+input wire [ABITS-1:0] ra, wa;
+input wire [DBITS-1:0] wd;
+output reg [DBITS-1:0] rd;
+
+reg [DBITS-1:0] mem [0:2**ABITS-1];
+
+always @(posedge clk)
+    if (we)
+        mem[wa] <= wd;
+
+always @(posedge clk)
+    rd <= mem[ra];
+
+endmodule
+"""
+for (abits, cnt, wclk, rclk, shared) in [
+	(4,   1, "ANY","ANY", False),
+	(4,   1, "ANY","NEG", False),
+	(4,   1, "ANY","POS", False),
+	(4,   1, "NEG","ANY", False),
+	(4,   1, "NEG","POS", False),
+	(4,   1, "NEG","NEG", False),
+	(4,   1, "POS","ANY", False),
+	(4,   1, "POS","NEG", False),
+	(4,   1, "POS","POS", False),
+	(4,   1, "ANY","ANY", True),
+	(4,   0, "NEG","POS", True), # FF mapping
+	(4,   1, "NEG","NEG", True),
+	(4,   0, "POS","NEG", True), # FF mapping
+	(4,   1, "POS","POS", True),
+	# cannot combine "ANY" with "POS|NEG" when using shared clock
+]:
+	name = f"clock_a{abits}_w{wclk}r{rclk}s{shared}"
+	defs = ["WCLK_" + wclk, "RCLK_" + rclk]
+	if (shared):
+		defs.append("SHARED_CLK")
+	TESTS.append(Test(
+		name, SYNCCLOCK.format(abits=abits),
+		["clock_sdp"], defs, {"RAM_CLOCK_SDP": cnt}
+	))
+
 ### mixed width testing
 # Wide write port
 MIXED_WRITE = """
