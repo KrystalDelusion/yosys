@@ -1,0 +1,39 @@
+
+# no uram by default
+design -reset
+read_verilog priority_memory.v
+synth_xilinx -family xcup -top priority_memory
+select -assert-none t:URAM288
+
+# uram option
+design -reset
+read_verilog priority_memory.v
+synth_xilinx -family xcup -top priority_memory -noiopad -uram
+select -assert-count 1 t:URAM288
+
+# uram parameter
+design -reset
+read -define USE_HUGE
+read_verilog priority_memory.v
+synth_xilinx -family xcup -top priority_memory -noiopad
+select -assert-count 1 t:URAM288
+
+# sp write first
+design -reset
+read_verilog priority_memory.v
+synth_xilinx -family xcup -top sp_write_first -noiopad
+select -assert-count 1 t:URAM288
+# write first connects rdata_a to port B
+select -assert-none 1 t:URAM288 %co:+[DOUT_A] w:rdata_a %i
+select -assert-count 1 t:URAM288 %co:+[DOUT_B] w:rdata_a %i
+
+# sp read first
+design -reset
+read_verilog priority_memory.v
+synth_xilinx -family xcup -top sp_read_first -noiopad
+select -assert-count 1 t:URAM288
+# read first connects rdata_a to port A
+select -assert-count 1 t:URAM288 %co:+[DOUT_A] w:rdata_a %i
+select -assert-none 1 t:URAM288 %co:+[DOUT_B] w:rdata_a %i
+
+# test priority in verific?
