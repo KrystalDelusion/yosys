@@ -23,23 +23,41 @@ module priority_memory (
 		rdata_b <= 'h0;
 	end
 
-
+	`ifndef FLIP_PORTS
 	always @(posedge clk) begin
-                // A port
-                if (wren_a)
-                        mem[addr_a] <= wdata_a;
-                else if (rden_a)
-                        rdata_a <= mem[addr_a];
+		// A port
+		if (wren_a)
+			mem[addr_a] <= wdata_a;
+		else if (rden_a)
+			rdata_a <= mem[addr_a];
 		
 		// B port
-                if (wren_b)
-                        mem[addr_b] <= wdata_b;
-                else if (rden_b)
-                        if (wren_a && addr_a == addr_b)
-                                rdata_b <= wdata_a;
-                        else
-                                rdata_b <= mem[addr_b];
+		if (wren_b)
+			mem[addr_b] <= wdata_b;
+		else if (rden_b)
+			if (wren_a && addr_a == addr_b)
+				rdata_b <= wdata_a;
+			else
+				rdata_b <= mem[addr_b];
 	end
+	`else // FLIP PORTS
+	always @(posedge clk) begin
+		// A port
+		if (wren_b)
+			mem[addr_b] <= wdata_b;
+		else if (rden_b)
+			rdata_b <= mem[addr_b];
+		
+		// B port
+		if (wren_a)
+			mem[addr_a] <= wdata_a;
+		else if (rden_a)
+			if (wren_b && addr_a == addr_b)
+				rdata_a <= wdata_b;
+			else
+				rdata_a <= mem[addr_a];
+	end
+	`endif
 endmodule
 
 module sp_write_first (clk, wren_a, rden_a, addr_a, wdata_a, rdata_a);
