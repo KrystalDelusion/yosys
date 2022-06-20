@@ -19,40 +19,26 @@ module priority_memory (
 
 	integer i;
 	initial begin
-	// 	for (i = 0; i < 2**ABITS; i = i+1)
-	// 		mem[i] <= 'h0;
 		rdata_a <= 'h0;
 		rdata_b <= 'h0;
 	end
 
 
 	always @(posedge clk) begin
-		if (addr_a != addr_b) begin
-			// A port
-			if (wren_a)
-				mem[addr_a] <= wdata_a;
-			else if (rden_a) 
-				rdata_a <= mem[addr_a];
-
-			// B port
-			if (wren_b)
-				mem[addr_b] <= wdata_b;
-			else if (rden_b) 
-				rdata_b <= mem[addr_b];
-		end else begin
-			// B has write priority
-			if (wren_b) begin
-				if (rden_a)
-					// A reads old
-					rdata_a <= mem[addr_a];
-				mem[addr_b] <= wdata_b;
-			end else if (wren_a) begin
-				mem[addr_a] <= wdata_a;
-				if (rden_b)
-					// B reads new
-					rdata_b <= wdata_a;
-			end
-		end
+                // A port
+                if (wren_a)
+                        mem[addr_a] <= wdata_a;
+                else if (rden_a)
+                        rdata_a <= mem[addr_a];
+		
+		// B port
+                if (wren_b)
+                        mem[addr_b] <= wdata_b;
+                else if (rden_b)
+                        if (wren_a && addr_a == addr_b)
+                                rdata_b <= wdata_a;
+                        else
+                                rdata_b <= mem[addr_b];
 	end
 endmodule
 
