@@ -1398,6 +1398,80 @@ for (abits, wbits, rwords, cntquad, cntoct) in [
 		{"LUT_MULTI": cntoct}
 	))
 
+# signal priorities & pattern testing
+PRIORITY = """
+module top(clk, clken, wren, wben, rden, rst, addr, wdata, rdata);
+
+localparam ABITS = {abits};
+localparam WBITS = {wbits};
+localparam WORDS = {words};
+
+localparam BITS = WBITS * WORDS;
+
+input wire clk, clken;
+input wire wren, rden, rst;
+input wire [WORDS-1:0] wben;
+input wire [ABITS-1:0] addr;
+input wire [BITS-1:0] wdata;
+output reg [BITS-1:0] rdata;
+
+reg [BITS-1:0] mem [0:2**ABITS-1];
+
+integer i;
+always @(posedge clk) begin
+{code}
+end
+endmodule
+"""
+#reset_gate in ["ungated", "rst", "rden && rst"]
+#clk_en in [True, False]
+#rdwr in ["nc", "old", "new", "undef", "newdef"]
+
+for (testname, 		reset_gate, 	rdwr,  clk_en, add_logic) in [
+	("no_reset", 	"", 		"old", False, 	0),
+	("gclken", 	"rst", 		"old", False, 	0),
+	("ungated", 	"ungated", 	"old", False, 	1), # muxes wren with rst
+	("gclken_ce", 	"rst", 		"old", True, 	3), # AND to simulate CLK_EN
+	("grden", 	"rden && rst", 	"old", False, 	1), # selects _clken, simulates _rden
+	("grden_ce", 	"rden && rst", 	"old", True, 	4), # both of the above
+	("exclwr",	"", 		"nc",  False, 	2), # selects new_only and simulates
+	("excl_rst", 	"rst", 		"nc",  False, 	3), # as above, extra gate for rst
+	("transwr",	"", 		"new", False, 	0),
+	("trans_rst",	"rst", 		"new", False, 	0),
+]:
+	write = "if (wren) \n\t\tmem[addr] <= wdata;"
+
+	if rdwr == "new":
+		read = """if (rden) 
+		if (wren)
+			rdata <= wdata;
+		else
+			rdata <= mem[addr];"""
+	else:
+		read = "if (rden) \n\t\trdata <= mem[addr];"
+
+	if "rst" in reset_gate:
+		read = f"if ({reset_gate})\n\t\trdata <= 0; \n\telse {read}"
+
+	if reset_gate == "ungated":
+		outer = "if (rst)\n\trdata <= 0;\nelse "
+	else:
+		outer = ""
+
+	if clk_en:
+		outer = f"{outer}if (clken) "
+
+	code = f"""{outer}begin
+	{write}
+	{"else " if rdwr == "nc" else ""}{read}
+end"""
+
+	TESTS.append(Test(
+		testname, PRIORITY.format(code=code, abits=4, wbits=8, words=2),
+		["block_sp_full"], ["USE_SRST"], 
+		{"RAM_BLOCK_SP": 1, "$*": add_logic}
+	))
+
 with open("run-test.mk", "w") as mf:
     mf.write("ifneq ($(strip $(SEED)),)\n")
     mf.write("SEEDOPT=-S$(SEED)\n")
