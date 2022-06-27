@@ -1472,6 +1472,50 @@ end"""
 		{"RAM_BLOCK_SP": 1, "$*": add_logic}
 	))
 
+for (testname, 			reset_gate, 	defs, 		rdwr,  add_logic) in [
+	("wr_byte",		"", 	["USE_SRST_BLOCKING"],	"old", 0),
+	("trans_byte",		"", 	["USE_SRST_BLOCKING"],	"new", 0),
+	("wr_rst_byte",		"rst", 	["USE_SRST"],		"old", 2), # expected mux to emulate blocking
+	("rst_wr_byte",		"rst", 	["USE_SRST_BLOCKING"],	"old", 2), # should use hardware blocking, doesn't
+	("rdenrst_wr_byte", 	"rden && rst", ["USE_SRST"],	"old", 3),
+]:
+	wordsloop = "for (i=0; i<WORDS; i=i+1)"
+	if rdwr == "old":
+		read_write = f"""if (rden)
+		rdata = mem[addr];
+	{wordsloop}
+		if (wben[i])
+			mem[addr][i] <= wdata[i];"""
+	else:
+		read_write = f"""{wordsloop}
+		if (wben[i]) begin
+			mem[addr][i] <= wdata[i];
+			rdata[i] <= wdata[i];
+		end else
+			rdata[i] <= mem[addr][i];"""
+
+	if "rst" in reset_gate:
+		reset_rw = f"""if ({reset_gate})
+		rdata <= 0;
+else begin
+	{read_write}
+end"""
+	else:
+		reset_rw = read_write
+
+	if reset_gate == "ungated":
+		outer = "if (rst)\n\trdata <= 0;\nelse "
+	else:
+		outer = ""
+
+	code = f"{outer}\n{reset_rw}"
+
+	TESTS.append(Test(
+		testname, PRIORITY.format(code=code, abits=4, wbits=1, words=2),
+		["block_sp_full"], defs, 
+		{"RAM_BLOCK_SP": 1, "$*": add_logic}
+	))
+
 with open("run-test.mk", "w") as mf:
     mf.write("ifneq ($(strip $(SEED)),)\n")
     mf.write("SEEDOPT=-S$(SEED)\n")
