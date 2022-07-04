@@ -1,7 +1,7 @@
 module top (clk, write_enable, read_enable, write_data, addr, read_data);
 parameter DATA_WIDTH = 8;
 parameter ADDR_WIDTH = 8;
-parameter USE_RDEN = 0;
+parameter SKIP_RDEN = 1;
 
 input clk;
 input write_enable, read_enable;
@@ -15,7 +15,7 @@ reg [DATA_WIDTH - 1 : 0] mem [2**ADDR_WIDTH - 1 : 0];
 always @(posedge clk) begin
 	if (write_enable)
 		mem[addr] <= write_data;
-	else if (USE_RDEN && read_enable)
+	else if (SKIP_RDEN || read_enable)
 		read_data <= mem[addr];
 end
 

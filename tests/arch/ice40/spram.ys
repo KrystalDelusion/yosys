@@ -7,7 +7,7 @@ select -assert-none t:SB_SPRAM256KA %% t:* %D
 # Testing with pattern as described in pattern document
 design -reset
 read_verilog spram.v
-chparam -set USE_RDEN 1
+chparam -set SKIP_RDEN 0
 hierarchy -top top
 synth_ice40
 select -assert-count 1 t:SB_SPRAM256KA
