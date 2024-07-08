@@ -183,6 +183,7 @@ jobs:
   prepare-docs:
     name: Generate docs artifact
     needs: test-docs
+    runs-on: ubuntu-latest
     env:
       CC: clang
     steps:
@@ -195,7 +196,7 @@ jobs:
       - name: Download build artifact
         uses: actions/download-artifact@v4
         with:
-          name: build-${{ matrix.os }}
+          name: build-ubuntu-latest
 
       - name: Uncompress build
         shell: bash
@@ -205,7 +206,7 @@ jobs:
       - name: Prepare docs
         shell: bash
         run:
-          make docs/source/cmd/abc.rst docs/gen_examples docs/gen_images docs/guidelines docs/usage docs/reqs
+          make docs/source/cmd/abc.rst docs/gen_examples docs/gen_images docs/guidelines docs/usage docs/reqs TARGETS= EXTRA_TARGETS= CONFIG=$CC
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
