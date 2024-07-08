@@ -179,3 +179,43 @@ jobs:
         shell: bash
         run: |
           make -C docs test -j${{ env.procs }}
+
+  prepare-docs:
+    name: Generate docs artifact
+    needs: test-docs
+    env:
+      CC: clang
+    steps:
+      - name: Checkout Yosys
+        uses: actions/checkout@v4
+
+      - name: Setup environment
+        uses: ./.github/actions/setup-build-env
+
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: build-${{ matrix.os }}
+
+      - name: Uncompress build
+        shell: bash
+        run:
+          tar -xvf build.tar
+
+      - name: Prepare docs
+        shell: bash
+        run:
+          make docs/source/cmd/abc.rst docs/gen_examples docs/gen_images docs/guidelines docs/usage docs/reqs
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: cmd-ref-${{ github.sha }}
+          path: docs/source/cmd
+
+      - name: Trigger RTDs build
+        uses: dfm/rtds-action@v1
+        with:
+          webhook_url: ${{ secrets.RTDS_WEBHOOK_URL }}
+          webhook_token: ${{ secrets.RTDS_WEBHOOK_TOKEN }}
+          commit_ref: ${{ github.ref }}
