@@ -209,13 +209,15 @@ jobs:
       - name: Prepare docs
         shell: bash
         run:
-          make docs/source/cmd/abc.rst TARGETS= EXTRA_TARGETS= CONFIG=$CC
+          make docs/source/cmd/abc.rst docs/guidelines docs/usage docs/reqs TARGETS= EXTRA_TARGETS= CONFIG=$CC
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: cmd-ref-${{ github.sha }}
-          path: docs/source/cmd
+          path: |
+            docs/source/cmd
+            docs/source/generated
 
       - name: Trigger RTDs build
         uses: dfm/rtds-action@v1.1.0

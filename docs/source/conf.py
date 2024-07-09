@@ -48,7 +48,7 @@ rtds_action_github_repo = "KrystalDelusion/yosys"
 
 # The path where the artifact should be extracted
 # Note: this is relative to the conf.py file!
-rtds_action_path = "cmd"
+rtds_action_path = "."
 
 # The "prefix" used in the `upload-artifact` step of the action
 rtds_action_artifact_prefix = "cmd-ref-"
