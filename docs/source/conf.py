@@ -44,7 +44,7 @@ highlight_language = 'none'
 extensions = ['sphinx.ext.autosectionlabel', 'sphinxcontrib.bibtex', 'rtds_action']
 
 # The name of your GitHub repository
-rtds_action_github_repo = "USERNAME/REPONAME"
+rtds_action_github_repo = "KrystalDelusion/yosys"
 
 # The path where the artifact should be extracted
 # Note: this is relative to the conf.py file!
