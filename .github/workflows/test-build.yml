@@ -218,6 +218,8 @@ jobs:
           path: |
             docs/source/cmd
             docs/source/generated
+            docs/source/_images
+            docs/source/code_examples
 
       - name: Trigger RTDs build
         uses: dfm/rtds-action@v1.1.0
