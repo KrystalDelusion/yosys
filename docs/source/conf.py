@@ -45,7 +45,7 @@ extensions = ['sphinx.ext.autosectionlabel', 'sphinxcontrib.bibtex']
 
 if os.getenv("READTHEDOCS"):
     # Use rtds_action if we are building on read the docs and have a github token env var
-    if os.getenv["GITHUB_TOKEN"]:
+    if os.getenv("GITHUB_TOKEN"):
         extensions += ['rtds_action']
 
         # The name of your GitHub repository
