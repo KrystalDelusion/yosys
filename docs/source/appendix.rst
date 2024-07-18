@@ -5,6 +5,7 @@ Appendix
 	:maxdepth: 2
 	:includehidden:
 
+	appendix/building_docs
 	appendix/primer
 	appendix/auxlibs
 	appendix/auxprogs
