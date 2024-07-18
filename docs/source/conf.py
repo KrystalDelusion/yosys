@@ -62,7 +62,7 @@ if os.getenv("READTHEDOCS"):
         rtds_action_github_token = os.environ["GITHUB_TOKEN"]
     else:
         # We're on read the docs but have no github token, this is probably a PR preview build
-        html_theme_options["announcement"] = 'Missing content? Check <a class="reference internal" href="https://tyrtd--2.org.readthedocs.build/en/2/appendix/building_docs.html#limitations">PR preview limitations</a>.'
+        html_theme_options["announcement"] = 'Missing content? Check <a class="reference internal" href="https://tyrtd--2.org.readthedocs.build/en/2/appendix/building_docs.html#pr-previews-and-limitations">PR preview limitations</a>.'
         html_theme_options["light_css_variables"]["color-announcement-background"] = "var(--color-admonition-title-background--caution)"
         html_theme_options["light_css_variables"]["color-announcement-text"] = "var(--color-content-foreground)"
 
