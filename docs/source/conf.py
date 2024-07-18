@@ -41,20 +41,30 @@ html_static_path = ['_static', "_images"]
 pygments_style = 'colorful'
 highlight_language = 'none'
 
-extensions = ['sphinx.ext.autosectionlabel', 'sphinxcontrib.bibtex', 'rtds_action']
+extensions = ['sphinx.ext.autosectionlabel', 'sphinxcontrib.bibtex']
 
-# The name of your GitHub repository
-rtds_action_github_repo = "KrystalDelusion/yosys"
+if os.getenv("READTHEDOCS"):
+    # Use rtds_action if we are building on read the docs and have a github token env var
+    if os.getenv["GITHUB_TOKEN"]:
+        extensions += ['rtds_action']
 
-# The path where the artifact should be extracted
-# Note: this is relative to the conf.py file!
-rtds_action_path = "."
+        # The name of your GitHub repository
+        rtds_action_github_repo = "KrystalDelusion/yosys"
 
-# The "prefix" used in the `upload-artifact` step of the action
-rtds_action_artifact_prefix = "cmd-ref-"
+        # The path where the artifact should be extracted
+        # Note: this is relative to the conf.py file!
+        rtds_action_path = "."
 
-# A GitHub personal access token is required, more info below
-rtds_action_github_token = os.environ["GITHUB_TOKEN"]
+        # The "prefix" used in the `upload-artifact` step of the action
+        rtds_action_artifact_prefix = "cmd-ref-"
+
+        # A GitHub personal access token is required for full RTD builds
+        rtds_action_github_token = os.environ["GITHUB_TOKEN"]
+    else:
+        # We're on read the docs but have no github token, this is probably a PR preview build
+        html_theme_options["announcement"] = "<strong>Oh no!</strong> This looks like a ReadTheDocs build, possibly for a PR preview, that's missing some generated content!"
+        html_theme_options["light_css_variables"]["color-announcement-background"] = "var(--color-admonition-title-background--caution)"
+        html_theme_options["light_css_variables"]["color-announcement-text"] = "var(--color-content-foreground)"
 
 # Ensure that autosectionlabel will produce unique names
 autosectionlabel_prefix_document = True
