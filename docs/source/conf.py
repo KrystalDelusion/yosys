@@ -41,7 +41,20 @@ html_static_path = ['_static', "_images"]
 pygments_style = 'colorful'
 highlight_language = 'none'
 
-extensions = ['sphinx.ext.autosectionlabel', 'sphinxcontrib.bibtex']
+extensions = ['sphinx.ext.autosectionlabel', 'sphinxcontrib.bibtex', 'rtds_action']
+
+# The name of your GitHub repository
+rtds_action_github_repo = "KrystalDelusion/yosys"
+
+# The path where the artifact should be extracted
+# Note: this is relative to the conf.py file!
+rtds_action_path = "."
+
+# The "prefix" used in the `upload-artifact` step of the action
+rtds_action_artifact_prefix = "cmd-ref-"
+
+# A GitHub personal access token is required, more info below
+rtds_action_github_token = os.environ["GITHUB_TOKEN"]
 
 # Ensure that autosectionlabel will produce unique names
 autosectionlabel_prefix_document = True
