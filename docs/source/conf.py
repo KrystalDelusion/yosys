@@ -11,7 +11,11 @@ yosys_ver = "0.48"
 # select HTML theme
 html_theme = 'furo-ys'
 html_css_files = ['custom.css']
-html_theme_options: dict[str] = {}
+html_theme_options: dict[str] = {
+    "source_repository": "https://github.com/YosysHQ/yosys/",
+    "source_branch": "main",
+    "source_directory": "docs/",
+}
 
 # These folders are copied to the documentation's HTML output
 html_static_path = ['_static', "_images"]
