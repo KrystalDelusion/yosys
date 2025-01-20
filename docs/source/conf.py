@@ -17,6 +17,24 @@ html_theme_options: dict[str] = {
     "source_directory": "docs/",
 }
 
+# try to fix the readthedocs detection
+html_context: dict[str] = {
+    "READTHEDOCS": True,
+    "display_github": True,
+    "github_user": "YosysHQ",
+    "github_repo": "yosys",
+    "slug": "yosys",
+}
+
+# override source_branch if not main
+git_slug = os.getenv("READTHEDOCS_VERSION_NAME")
+if git_slug not in [None, "latest", "stable"]:
+    html_theme_options["source_branch"] = git_slug
+
+# edit only works on branches, not tags
+if os.getenv("READTHEDOCS_VERSION_TYPE", "branch") != "branch":
+        html_theme_options["top_of_page_buttons"] = ["view"]
+
 # These folders are copied to the documentation's HTML output
 html_static_path = ['_static', "_images"]
 
