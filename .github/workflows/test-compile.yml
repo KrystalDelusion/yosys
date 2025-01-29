@@ -58,7 +58,7 @@ jobs:
         uses: ./.github/actions/setup-build-env
 
       - name: Setup Cpp
-        uses: aminya/setup-cpp@v1
+        uses: aminya/setup-cpp@c08b75129664adcdc73941d2bc88206143c1fb47
         with:
           compiler: ${{ matrix.compiler }}
 
