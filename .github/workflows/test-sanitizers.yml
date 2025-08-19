@@ -30,6 +30,7 @@ jobs:
       CC: clang
       ASAN_OPTIONS: halt_on_error=1
       UBSAN_OPTIONS: halt_on_error=1
+      LSAN_OPTIONS: halt_on_error=1
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest]
