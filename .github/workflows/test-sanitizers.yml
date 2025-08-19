@@ -33,7 +33,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest]
-        sanitizer: ['undefined,address']
+        sanitizer: ['undefined,address', undefined, address, leak]
       fail-fast: false
     steps:
       - name: Checkout Yosys
