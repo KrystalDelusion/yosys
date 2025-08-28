@@ -47,6 +47,9 @@ jobs:
           # macOS
           - os: macos-13
             compiler: 'clang'
+          # macOS arm64
+          - os: macos-latest
+            compiler: 'clang'
       fail-fast: false
     steps:
       - name: Checkout Yosys
