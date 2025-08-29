@@ -9,8 +9,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-abc:
-    name: Just build ABC
+  build-yosys:
+    name: Just build Yosys
     runs-on: ${{ matrix.os }}
     env:
       CC: clang
@@ -39,4 +39,4 @@ jobs:
           mkdir build
           cd build
           make -f ../Makefile config-$CC
-          make -f ../Makefile -j$procs ${{ matrix.mkopts }} yosys-abc
+          make -f ../Makefile -j$procs ${{ matrix.mkopts }} yosys
