@@ -15,8 +15,12 @@ on:
       CC: clang
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest]
-        mkopts: ['ENABLE_LTO=1', '']
+        os:
+          - ubuntu-latest
+          - macos-latest
+        mkopts:
+          - 'ENABLE_LTO=1'
+          - ''
       fail-fast: false
     steps:
       - name: Checkout Yosys
