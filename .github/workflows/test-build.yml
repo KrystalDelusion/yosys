@@ -8,6 +8,7 @@ on:
   # allow triggering tests, ignores skip check
   workflow_dispatch:
 
+jobs:
   build-abc:
     name: Just build ABC
     runs-on: ${{ matrix.os }}
