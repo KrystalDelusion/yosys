@@ -45,8 +45,6 @@ jobs:
     # pre_job is a subset of pre_docs_job, so we can always build for pre_docs_job
     needs: pre_docs_job
     if: needs.pre_docs_job.outputs.should_skip != 'true'
-    env:
-      CC: clang
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest]
@@ -60,6 +58,8 @@ jobs:
 
       - name: Setup environment
         uses: ./.github/actions/setup-build-env
+        with:
+          compiler: clang
 
       - name: Build
         shell: bash
