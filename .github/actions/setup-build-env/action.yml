@@ -19,8 +19,7 @@ runs:
       if: runner.os == 'macOS'
       shell: bash
       run: |
-        brew update
-        brew install bison flex gawk libffi pkg-config bash autoconf lld || true
+        brew bundle
 
     - name: Linux runtime environment
       if: runner.os == 'Linux'
