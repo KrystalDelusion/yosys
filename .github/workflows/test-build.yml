@@ -37,7 +37,6 @@ jobs:
         shell: bash
         run: |
           $CC --version
-          $CXX --version
 
       - name: Build
         shell: bash
