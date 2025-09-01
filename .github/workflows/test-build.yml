@@ -33,6 +33,12 @@ jobs:
       - name: Setup environment
         uses: ./.github/actions/setup-build-env
 
+      - name: Tool versions
+        shell: bash
+        run: |
+          $CC --version
+          $CXX --version
+
       - name: Build
         shell: bash
         run: |
